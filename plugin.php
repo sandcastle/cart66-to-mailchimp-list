@@ -58,6 +58,8 @@ function process_order($order_id) {
  */
 function subscribe_user($order) {
 
+  // ------
+
   $list_id = '';
   $apikey = '';
   $dc = substr($apikey, strripos($apikey, '-') + 1);
@@ -68,21 +70,18 @@ function subscribe_user($order) {
 
   // Log the current time
   $time = get_milli_time();
-  echo "Now: " . $time;
-
-  $jsonOrder = json_encode($order);
-  echo $jsonOrder;
+  debug_to_console("Now: " . $time);
 
   // ------
 
   // Build request
   $data = array(
     'apikey'        => $apikey,
-    'email_address' => $order.contact.email,
+    'email_address' => $order["contact"]["email"],
     'status'        => 'subscribed',
     'merge_fields'  => array(
-        'FNAME' => $order.contact.first_name,
-        'LNAME' => $order.contact.last_name
+        'FNAME' => $order["contact"]["first_name"],
+        'LNAME' => $order["contact"]["last_name"]
     )
   );
 
@@ -106,17 +105,19 @@ function subscribe_user($order) {
       )
   );
 
+  debug_to_console('URL: ', $url);
+
   $context  = stream_context_create($options);
   $result = file_get_contents($url, false, $context);
 
   if ($result === FALSE) {
     debug_to_console('Failed to post to URL');
+    return;
   }
 
-  $response = json_decode( $result );
-
-  debug_to_console('Response');
+  debug_to_console($http_response_header);
   debug_to_console($response);
+  debug_to_console($result);
 }
 
 
