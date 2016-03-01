@@ -105,7 +105,7 @@ function subscribe_user($order) {
       )
   );
 
-  debug_to_console('URL: ', $url);
+  debug_to_console('URL: ' . $url);
 
   $context  = stream_context_create($options);
   $result = file_get_contents($url, false, $context);
@@ -115,9 +115,8 @@ function subscribe_user($order) {
     return;
   }
 
-  debug_to_console($http_response_header);
-  debug_to_console($response);
-  debug_to_console($result);
+  debug_to_console(json_encode($http_response_header));
+  debug_to_console(json_encode($response));
 }
 
 
