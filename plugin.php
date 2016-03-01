@@ -100,7 +100,6 @@ function subscribe_user($order) {
       'content' => $jsonData,
       'header'=>
         'Content-Type: application/json\r\n' .
-        'Accept: application/json\r\n' .
         'Authorization: Basic '.$auth
       )
   );
@@ -110,13 +109,13 @@ function subscribe_user($order) {
   $context  = stream_context_create($options);
   $result = file_get_contents($url, false, $context);
 
+  debug_to_console(json_encode($http_response_header));
+  debug_to_console(json_encode($response));
+
   if ($result === FALSE) {
     debug_to_console('Failed to post to URL');
     return;
   }
-
-  debug_to_console(json_encode($http_response_header));
-  debug_to_console(json_encode($response));
 }
 
 
