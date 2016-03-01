@@ -25,11 +25,21 @@ function debug_to_console( $data ) {
     echo $output;
 }
 
+function getTimeToMicroseconds() {
+
+    $t = microtime(true);
+    $micro = sprintf("%06d", ($t - floor($t)) * 1000000);
+    $d = new DateTime(date('Y-m-d H:i:s.' . $micro, $t));
+    return $d->format("Y-m-d H:i:s.u");
+}
 
 /**
  * Proceses an order.
  */
 function process_order($order_id) {
+
+  $time = getTimeToMicroseconds();
+  echo "Now: " . $time;
 
   // Make sure the Cart66 class exists before attempting to use it
   if(!class_exists('CC')) {
@@ -73,18 +83,10 @@ function look_at_order($order) {
   }
 
   $response = json_decode( $result );
+
+  debug_to_console($response);
 }
 
-function add_to_cart($val) {
-  debug_to_console('Added item to cart');
-  debug_to_console($val);
-}
-
-add_action('cart66_after_order_saved',  'add_to_cart', 'cart66_after_order_saved');
-add_action('cart66_after_remove_item',  'add_to_cart', 'cart66_after_remove_item');
-add_action('cart66_after_add_to_cart',  'add_to_cart', 'cart66_after_add_to_cart');
-add_action('cart66_before_add_to_cart', 'add_to_cart', 'cart66_before_add_to_cart');
-add_action('cart66_after_update_car',   'add_to_cart', 'cart66_after_update_car');
 add_action('cc_load_receipt', 'process_order');
 
 ?>
