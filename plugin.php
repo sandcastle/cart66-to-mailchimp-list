@@ -12,27 +12,25 @@ Author URI: https://github.com/sandcastle
 /**
  * Print a debug message to the browser config using "console.log"
  */
-function debug_to_console( $data ) {
+function debug_to_console($data) {
 
-  if ( is_array( $data ) ) {
-      $output = "<script>console.log('" . implode( ',', $data) . "' );</script>";
-  }
-  else {
-      $output = "<script>console.log('" . $data . "' );</script>";
-  }
+    if (is_array($data)) {
+        $output = "<script>console.log('".implode(',', $data)."' );</script>";
+    } else {
+        $output = "<script>console.log('".$data."' );</script>";
+    }
 
-  // Print to the page
-  echo $output;
+    echo $output;
 }
 
 /**
  * Get the current time in milliseconds for accuracy.
  */
 function get_milli_time() {
-  $t = microtime(true);
-  $micro = sprintf("%06d", ($t - floor($t)) * 1000000);
-  $d = new DateTime(date('Y-m-d H:i:s.' . $micro, $t));
-  return $d->format("Y-m-d H:i:s.u");
+    $t = microtime(true);
+    $micro = sprintf("%06d", ($t - floor($t)) * 1000000);
+    $d = new DateTime(date('Y-m-d H:i:s.'.$micro, $t));
+    return $d->format("Y-m-d H:i:s.u");
 }
 
 /**
@@ -40,17 +38,17 @@ function get_milli_time() {
  */
 function process_order($order_id) {
 
-  // Make sure the Cart66 class exists before attempting to use it
-  if(!class_exists('CC')) {
-    debug_to_console('CC not defined');
-    return;
-  }
+    // Make sure the Cart66 class exists before attempting to use it
+    if (!class_exists('CC')) {
+        debug_to_console('CC not defined');
+        return;
+    }
 
-  // Get the order data
-  $order = CC::order_data($order_id);
+    // Get the order data
+    $order = CC::order_data($order_id);
 
-  // send_order($order);
-  subscribe_user($order);
+    // send_order($order);
+    subscribe_user($order);
 }
 
 /**
@@ -66,88 +64,59 @@ function subscribe_user($order) {
 
   // ------
 
-  // TODO: Remove debug information
-
-  // Log the current time
-  $time = get_milli_time();
-  debug_to_console("Now: " . $time);
-
-  // ------
-
   // Build request
   $data = array(
-    'apikey'        => $apikey,
+    'apikey' => $apikey,
     'email_address' => $order["contact"]["email"],
-    'status'        => 'subscribed',
-    'merge_fields'  => array(
-        'FNAME' => $order["contact"]["first_name"],
-        'LNAME' => $order["contact"]["last_name"]
+    'status' => 'subscribed',
+    'merge_fields' => array(
+      'FNAME' => $order["contact"]["first_name"],
+      'LNAME' => $order["contact"]["last_name"]
     )
   );
 
   // Serialize the order to JSON
   $jsonData = json_encode($data);
 
-  debug_to_console($jsonData);
-
   // ------
 
-  $auth = base64_encode( 'user:' . $apikey );
-  $url = 'https://' . $dc . '.api.mailchimp.com/3.0/lists/' . $list_id . '/members';
-  $options = array(
-    'http' => array(
-      'method'  => 'POST',
-      'content' => $jsonData,
-      'header'=>
-        'Content-Type: application/json\r\n' .
-        'Authorization: Basic '.$auth
-      )
+  $auth = base64_encode('user:'.$apikey);
+  $url = 'https://'.$dc.'.api.mailchimp.com/3.0/lists/'.$list_id.'/members';
+
+  $headr = array(
+    'Content-Type: application/json',
+    'Authorization: Basic '.$auth
   );
 
-  debug_to_console('URL: ' . $url);
-
-  $context  = stream_context_create($options);
-  $result = file_get_contents($url, false, $context);
-
-  debug_to_console(json_encode($http_response_header));
-  debug_to_console(json_encode($response));
-
-  if ($result === FALSE) {
-    debug_to_console('Failed to post to URL');
-    return;
+  $handle = curl_init($url);
+  curl_setopt($handle, CURLOPT_POST, true);
+  curl_setopt($handle, CURLOPT_POSTFIELDS, $jsonData);
+  curl_setopt($handle, CURLOPT_HTTPHEADER, $headr);
+  curl_exec($handle);
+  if (empty($result)) {
+      debug_to_console('error');
+  } else {
+      debug_to_console('success');
   }
+  curl_close($handle);
 }
 
+// add_action('cc_load_receipt', 'process_order');
 
-// /**
-//  * Proceses an order.
-//  */
-// function send_order($order) {
+// ------
 
-//   $url = 'http://requestb.in/1nhnycj1';
+// TODO: Remove test trigger
 
-//   // serialize the order to JSON
-//   $data = json_encode($order);
+$testData = array(
+  'contact' => array(
+    'email' => 'glenn@glennandkristy.com',
+    'first_name' => 'Glenn',
+    'last_name' => 'Morton'
+  )
+);
 
-//   $options = array(
-//     'http' => array(
-//       'method'  => 'POST',
-//       'content' => $data,
-//       'header'=>  "Content-Type: application/json\r\n" .
-//                   "Accept: application/json\r\n"
-//       )
-//   );
+subscribe_user($testData);
 
-//   $context  = stream_context_create( $options );
-//   $result = file_get_contents( $url, false, $context );
-
-//   if ($result === FALSE) {
-//     debug_to_console('Failed to post to URL');
-//   }
-
-//   $response = json_decode( $result );
-// }
-
-add_action('cc_load_receipt', 'process_order');
+// ------
 
 ?>
